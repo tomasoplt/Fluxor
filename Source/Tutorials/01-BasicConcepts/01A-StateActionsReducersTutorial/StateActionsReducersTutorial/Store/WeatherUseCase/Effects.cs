@@ -10,7 +10,7 @@ namespace BasicConcepts.StateActionsReducersTutorial.Store.CounterUseCase
 		}
 
 		[EffectMethod]
-		public async Task HandleFetchDataAction(FetchDataAction action, IStore dispatcher)
+		public async Task HandleFetchDataAction(FetchDataAction action, IStore store)
 		{
 			await Task.CompletedTask;
 		}
