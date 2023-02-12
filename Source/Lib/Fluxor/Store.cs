@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
@@ -229,29 +228,10 @@ namespace Fluxor
 
 		private void TriggerEffects(object action)
 		{
-
 			var recordedExceptions = new List<Exception>();
-			IEffect[] effectsToExecute = null;
-
-			Effects.AddRange(Effects);
-			Effects.AddRange(Effects);
-			Effects.AddRange(Effects);
-			Effects.AddRange(Effects);
-			Effects.AddRange(Effects);
-			Effects.AddRange(Effects);
-
-			Stopwatch w= Stopwatch.StartNew();
-
-			for (int i = 0; i < 5000; i++)
-			{
-				
-				 effectsToExecute = Effects
-					.Where(x => x.ShouldReactToAction(action))
-					.ToArray();
-			}
-			w.Stop();
-			System.Diagnostics.Debug.WriteLine(w.ElapsedMilliseconds);
-
+			var effectsToExecute = Effects
+				.Where(x => x.ShouldReactToAction(action))
+				.ToArray();
 			var executedEffects = new List<Task>();
 
 			Action<Exception> collectExceptions = e =>
