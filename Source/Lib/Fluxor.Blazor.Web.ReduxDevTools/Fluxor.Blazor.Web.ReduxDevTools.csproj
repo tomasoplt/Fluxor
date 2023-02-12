@@ -9,6 +9,7 @@
 
 	<PropertyGroup>
 		<RazorLangVersion>3.0</RazorLangVersion>
+		<SignAssembly>False</SignAssembly>
 	</PropertyGroup>
 
 	<ItemGroup>

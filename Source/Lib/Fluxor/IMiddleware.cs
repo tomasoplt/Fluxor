@@ -14,7 +14,7 @@ namespace Fluxor
 		/// </summary>
 		/// <param name="dispatcher">A reference to the dispatcher</param>
 		/// <param name="store">A reference to the store</param>
-		Task InitializeAsync(IDispatcher dispatcher, IStore store);
+		Task InitializeAsync(IStore store);
 
 		/// <summary>
 		/// Called exactly once by the store after <see cref="InitializeAsync(IStore)"/> has been

@@ -15,7 +15,6 @@ namespace Fluxor
 
 		private object SyncRoot = new object();
 		private bool Disposed;
-		private readonly IDispatcher Dispatcher;
 		private readonly Dictionary<string, IFeature> FeaturesByName = new(StringComparer.InvariantCultureIgnoreCase);
 		private readonly List<IEffect> Effects = new();
 		private readonly List<IMiddleware> Middlewares = new();
@@ -32,12 +31,10 @@ namespace Fluxor
 		/// <summary>
 		/// Creates an instance of the store
 		/// </summary>
-		public Store(IDispatcher dispatcher)
+		public Store()
 		{
 			ActionSubscriber = new ActionSubscriber();
-			Dispatcher = dispatcher ?? throw new ArgumentNullException(nameof(dispatcher));
-			Dispatcher.ActionDispatched += ActionDispatched;
-			Dispatcher.Dispatch(new StoreInitializedAction());
+			Dispatch(new StoreInitializedAction());
 		}
 
 		/// <see cref="IStore.GetMiddlewares"/>
@@ -53,6 +50,39 @@ namespace Fluxor
 			{
 				FeaturesByName.Add(feature.GetName(), feature);
 			}
+		}
+
+		public void Dispatch(object action)
+		{
+			if (action is null)
+				throw new ArgumentNullException(nameof(action));
+
+			lock (SyncRoot)
+			{
+				// Do not allow task dispatching inside a middleware-change.
+				// These change cycles are for things like "jump to state" in Redux Dev Tools
+				// and should be short lived.
+				// We avoid dispatching inside a middleware change because we don't want UI events (like component Init)
+				// that trigger actions (such as fetching data from a server) to execute
+				if (IsInsideMiddlewareChange)
+					return;
+
+				// If a dequeue is already in progress, we will just
+				// let this new action be added to the queue and then exit
+				// Note: This is to cater for the following scenario
+				//	1: An action is dispatched
+				//	2: An effect is triggered
+				//	3: The effect immediately dispatches a new action
+				// The Queue ensures it is processed after its triggering action has completed rather than immediately
+				QueuedActions.Enqueue(e.Action);
+
+				// HasActivatedStore is set to true when the page finishes loading
+				// At which point DequeueActions will be called
+				if (!HasActivatedStore)
+					return;
+
+				DequeueActions();
+			};
 		}
 
 		/// <see cref="IStore.AddEffect(IEffect)"/>
@@ -79,7 +109,7 @@ namespace Fluxor
 				if (HasActivatedStore)
 				{
 					middleware
-						.InitializeAsync(Dispatcher, this)
+						.InitializeAsync(this)
 						.ContinueWith(t =>
 						{
 							if (!t.IsFaulted)
@@ -137,39 +167,43 @@ namespace Fluxor
 			if (!Disposed)
 			{
 				Disposed = true;
-				Dispatcher.ActionDispatched -= ActionDispatched;
 			}
 		}
-
-
-		private void ActionDispatched(object sender, ActionDispatchedEventArgs e)
+		 
+		private void DequeueActions()
 		{
-			lock (SyncRoot)
+			if (IsDispatching)
+				return;
+
+			var dispatchedActions = new List<object>();
+			IsDispatching = true;
+			try
 			{
-				// Do not allow task dispatching inside a middleware-change.
-				// These change cycles are for things like "jump to state" in Redux Dev Tools
-				// and should be short lived.
-				// We avoid dispatching inside a middleware change because we don't want UI events (like component Init)
-				// that trigger actions (such as fetching data from a server) to execute
-				if (IsInsideMiddlewareChange)
-					return;
+				while (QueuedActions.Count > 0)
+				{
+					object nextActionToProcess = QueuedActions.Dequeue();
 
-				// If a dequeue is already in progress, we will just
-				// let this new action be added to the queue and then exit
-				// Note: This is to cater for the following scenario
-				//	1: An action is dispatched
-				//	2: An effect is triggered
-				//	3: The effect immediately dispatches a new action
-				// The Queue ensures it is processed after its triggering action has completed rather than immediately
-				QueuedActions.Enqueue(e.Action);
+					// Only process the action if no middleware vetos it
+					if (Middlewares.All(x => x.MayDispatchAction(nextActionToProcess)))
+					{
+						ExecuteMiddlewareBeforeDispatch(nextActionToProcess);
 
-				// HasActivatedStore is set to true when the page finishes loading
-				// At which point DequeueActions will be called
-				if (!HasActivatedStore)
-					return;
+						// Notify all features of this action
+						foreach (var featureInstance in FeaturesByName.Values)
+							featureInstance.ReceiveDispatchNotificationFromStore(nextActionToProcess);
 
-				DequeueActions();
-			};
+						ActionSubscriber?.Notify(nextActionToProcess);
+						ExecuteMiddlewareAfterDispatch(nextActionToProcess);
+						dispatchedActions.Add(nextActionToProcess);
+					}
+				}
+			}
+			finally
+			{
+				IsDispatching = false;
+			}
+			foreach (var dispatchedAction in dispatchedActions)
+				TriggerEffects(dispatchedAction);
 		}
 
 		private void EndMiddlewareChange(IDisposable[] disposables)
@@ -207,7 +241,7 @@ namespace Fluxor
 			{
 				try
 				{
-					executedEffects.Add(effect.HandleAsync(action, Dispatcher));
+					executedEffects.Add(effect.HandleAsync(action, this));
 				}
 				catch (Exception e)
 				{
@@ -237,7 +271,7 @@ namespace Fluxor
 		{
 			foreach (IMiddleware middleware in Middlewares)
 			{
-				await middleware.InitializeAsync(Dispatcher, this);
+				await middleware.InitializeAsync(this);
 			}
 			Middlewares.ForEach(x => x.AfterInitializeAllMiddlewares());
 		}
@@ -266,42 +300,6 @@ namespace Fluxor
 				DequeueActions();
 				InitializedCompletionSource.SetResult(true);
 			}
-		}
-
-		private void DequeueActions()
-		{
-			if (IsDispatching)
-				return;
-
-			var dispatchedActions = new List<object>();
-			IsDispatching = true;
-			try
-			{
-				while (QueuedActions.Count > 0)
-				{
-					object nextActionToProcess = QueuedActions.Dequeue();
-
-					// Only process the action if no middleware vetos it
-					if (Middlewares.All(x => x.MayDispatchAction(nextActionToProcess)))
-					{
-						ExecuteMiddlewareBeforeDispatch(nextActionToProcess);
-
-						// Notify all features of this action
-						foreach (var featureInstance in FeaturesByName.Values)
-							featureInstance.ReceiveDispatchNotificationFromStore(nextActionToProcess);
-
-						ActionSubscriber?.Notify(nextActionToProcess);
-						ExecuteMiddlewareAfterDispatch(nextActionToProcess);
-						dispatchedActions.Add(nextActionToProcess);
-					}
-				}
-			}
-			finally
-			{
-				IsDispatching = false;
-			}
-			foreach(var dispatchedAction in dispatchedActions)
-				TriggerEffects(dispatchedAction);
 		}
 	}
 }

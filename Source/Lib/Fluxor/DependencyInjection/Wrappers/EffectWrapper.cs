@@ -5,11 +5,11 @@ namespace Fluxor.DependencyInjection.Wrappers
 {
 	internal class EffectWrapper<TAction> : IEffect
 	{
-		private delegate Task HandleWithActionParameterAsyncHandler(TAction action, IDispatcher dispatcher);
-		private delegate Task HandleWithoutActionParameterAsyncHandler(IDispatcher dispatcher);
+		private delegate Task HandleWithActionParameterAsyncHandler(TAction action, IStore store);
+		private delegate Task HandleWithoutActionParameterAsyncHandler(IStore store);
 		private readonly HandleWithActionParameterAsyncHandler HandleAsync;
 
-		Task IEffect.HandleAsync(object action, IDispatcher dispatcher) => HandleAsync((TAction)action, dispatcher);
+		Task IEffect.HandleAsync(object action, IStore store) => HandleAsync((TAction)action, store);
 		bool IEffect.ShouldReactToAction(object action) => action is TAction;
 
 		public EffectWrapper(object effectHostInstance, EffectMethodInfo effectMethodInfos)
@@ -28,7 +28,7 @@ namespace Fluxor.DependencyInjection.Wrappers
 				effectHostInstance,
 				effectMethodInfos);
 
-			return new HandleWithActionParameterAsyncHandler((action, dispatcher) => handler.Invoke(dispatcher));
+			return new HandleWithActionParameterAsyncHandler((action, store) => handler.Invoke(store));
 		}
 
 		private static HandleWithActionParameterAsyncHandler CreateHandlerWithActionParameter(
