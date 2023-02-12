@@ -16,8 +16,7 @@ namespace Fluxor.UnitTests.StoreTests.BeginInternalMiddlewareChangeTests
 					$"{nameof(BeginInternalMiddlewareChangeTests)}.{nameof(WhenCalled_ThenExecutesOnAllRegisteredMiddlewares)}",
 					() => disposeCount++));
 
-			var dispatcher = new Dispatcher();
-			var subject = new Store(dispatcher);
+			var subject = new Store();
 			subject.AddMiddleware(mockMiddleware.Object);
 
 			var disposable1 = subject.BeginInternalMiddlewareChange();

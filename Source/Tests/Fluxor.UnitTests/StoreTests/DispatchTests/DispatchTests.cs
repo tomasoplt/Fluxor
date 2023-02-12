@@ -9,13 +9,12 @@ namespace Fluxor.UnitTests.StoreTests.DispatchTests
 {
 	public class DispatchTests
 	{
-		private readonly IDispatcher Dispatcher;
 		private readonly IStore Subject;
 
 		[Fact]
 		public void WhenActionIsNull_ThenThrowsArgumentNullException()
 		{
-			Assert.Throws<ArgumentNullException>(() => Dispatcher.Dispatch(null));
+			Assert.Throws<ArgumentNullException>(() => Subject.Dispatch(null));
 		}
 
 		[Fact]
@@ -28,7 +27,7 @@ namespace Fluxor.UnitTests.StoreTests.DispatchTests
 			var testAction = new TestAction();
 			using (Subject.BeginInternalMiddlewareChange())
 			{
-				Dispatcher.Dispatch(testAction);
+				Subject.Dispatch(testAction);
 			}
 
 			mockMiddleware.Verify(x => x.MayDispatchAction(testAction), Times.Never);
@@ -44,7 +43,7 @@ namespace Fluxor.UnitTests.StoreTests.DispatchTests
 				.Setup(x => x.MayDispatchAction(testAction))
 				.Returns(false);
 
-			Dispatcher.Dispatch(testAction);
+			Subject.Dispatch(testAction);
 
 			mockFeature
 				.Verify(x => x.ReceiveDispatchNotificationFromStore(testAction), Times.Never);
@@ -57,7 +56,7 @@ namespace Fluxor.UnitTests.StoreTests.DispatchTests
 			var mockMiddleware = MockMiddlewareFactory.Create();
 			Subject.AddMiddleware(mockMiddleware.Object);
 
-			Dispatcher.Dispatch(testAction);
+			Subject.Dispatch(testAction);
 
 			mockMiddleware
 				.Verify(x => x.BeforeDispatch(testAction), Times.Once);
@@ -70,7 +69,7 @@ namespace Fluxor.UnitTests.StoreTests.DispatchTests
 			Subject.AddFeature(mockFeature.Object);
 
 			var testAction = new TestAction();
-			Dispatcher.Dispatch(testAction);
+			Subject.Dispatch(testAction);
 
 			mockFeature
 				.Verify(x => x.ReceiveDispatchNotificationFromStore(testAction));
@@ -86,7 +85,7 @@ namespace Fluxor.UnitTests.StoreTests.DispatchTests
 			Subject.AddFeature(mockFeature.Object);
 			Subject.AddEffect(new EffectThatEmitsActions(actionsToEmit));
 
-			Dispatcher.Dispatch(new TestAction());
+			Subject.Dispatch(new TestAction());
 
 			mockFeature
 				.Verify(x => x.ReceiveDispatchNotificationFromStore(actionToEmit1), Times.Once);
@@ -110,10 +109,10 @@ namespace Fluxor.UnitTests.StoreTests.DispatchTests
 			Subject.AddEffect(mockCompatibleEffect.Object);
 
 			var action = new TestAction();
-			Dispatcher.Dispatch(action);
+			Subject.Dispatch(action);
 
-			mockIncompatibleEffect.Verify(x => x.HandleAsync(action, It.IsAny<IDispatcher>()), Times.Never);
-			mockCompatibleEffect.Verify(x => x.HandleAsync(action, It.IsAny<IDispatcher>()), Times.Once);
+			mockIncompatibleEffect.Verify(x => x.HandleAsync(action, It.IsAny<IStore>()), Times.Never);
+			mockCompatibleEffect.Verify(x => x.HandleAsync(action, It.IsAny<IStore>()), Times.Once);
 		}
 
 		[Fact]
@@ -126,7 +125,7 @@ namespace Fluxor.UnitTests.StoreTests.DispatchTests
 				.Setup(x => x.ShouldReactToAction(action))
 				.Returns(true);
 			mockSynchronousEffectThatThrows
-				.Setup(x => x.HandleAsync(action, Dispatcher))
+				.Setup(x => x.HandleAsync(action, Subject))
 				.ThrowsAsync(new NotImplementedException());
 
 			var mockEffectThatFollows = new Mock<IEffect>();
@@ -136,32 +135,25 @@ namespace Fluxor.UnitTests.StoreTests.DispatchTests
 
 			Subject.AddEffect(mockSynchronousEffectThatThrows.Object);
 			Subject.AddEffect(mockEffectThatFollows.Object);
-			Dispatcher.Dispatch(action);
+			Subject.Dispatch(action);
 
-			mockSynchronousEffectThatThrows.Verify(x => x.HandleAsync(action, Dispatcher));
-			mockEffectThatFollows.Verify(x => x.HandleAsync(action, Dispatcher));
+			mockSynchronousEffectThatThrows.Verify(x => x.HandleAsync(action, Subject));
+			mockEffectThatFollows.Verify(x => x.HandleAsync(action, Subject));
 		}
 
 		[Fact]
 		public void WhenNoSubscriberIsAttachedToTheDispatcher_ThenActionsAreStoredUntilOneSubscribes()
 		{
-			var dispatcher = new Dispatcher();
-			dispatcher.Dispatch(0);
-			dispatcher.Dispatch(1);
-			dispatcher.Dispatch(2);
+			Subject.Dispatch(0);
+			Subject.Dispatch(1);
+			Subject.Dispatch(2);
 
-			var receivedActions = new List<int>();
-			dispatcher.ActionDispatched += (_, args) => receivedActions.Add((int)args.Action);
-			Assert.Equal(3, receivedActions.Count);
-			Assert.Equal(0, receivedActions[0]);
-			Assert.Equal(1, receivedActions[1]);
-			Assert.Equal(2, receivedActions[2]);
+			Assert.Equal(3, Subject.GetQueuedActionsCount());
 		}
 
 		public DispatchTests()
 		{
-			Dispatcher = new Dispatcher();
-			Subject = new Store(Dispatcher);
+			Subject = new Store();
 			Subject.InitializeAsync().Wait();
 		}
 	}

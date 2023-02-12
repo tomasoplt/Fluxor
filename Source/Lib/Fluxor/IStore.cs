@@ -11,6 +11,18 @@ namespace Fluxor
 	public interface IStore : IActionSubscriber
 	{
 		/// <summary>
+		/// Dispatches action
+		/// </summary>
+		/// <param name="action"></param>
+		void Dispatch(object action);
+
+		/// <summary>
+		/// Get Actions which waiting int the queue for Dispatch
+		/// </summary>
+		/// <returns></returns>
+		int GetQueuedActionsCount();
+
+		/// <summary>
 		/// This method will register an effect so that it
 		/// is executed whenever an action dispatched via the store.
 		/// </summary>

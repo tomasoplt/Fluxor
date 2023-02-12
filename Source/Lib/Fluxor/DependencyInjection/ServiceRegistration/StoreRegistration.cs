@@ -2,8 +2,6 @@
 using Fluxor.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Fluxor.DependencyInjection.ServiceRegistration
 {
@@ -31,7 +29,6 @@ namespace Fluxor.DependencyInjection.ServiceRegistration
 			EffectClassRegistration.Register(services, effectClassInfos, options);
 			EffectMethodRegistration.Register(services, effectMethodInfos, options);
 
-			services.Add<IDispatcher, Dispatcher>(options);
 			// Register IActionSubscriber as an alias to Store
 			services.Add<IActionSubscriber>(serviceProvider => serviceProvider.GetService<Store>(), options);
 			// Register IStore as an alias to Store
@@ -41,7 +38,7 @@ namespace Fluxor.DependencyInjection.ServiceRegistration
 			services.Add(typeof(Store), serviceProvider =>
 			{
 				var dispatcher = serviceProvider.GetService<IDispatcher>();
-				var store = new Store(dispatcher);
+				var store = new Store();
 				foreach (FeatureClassInfo featureClassInfo in featureClassInfos)
 				{
 					var feature = (IFeature)serviceProvider.GetService(featureClassInfo.FeatureInterfaceGenericType);

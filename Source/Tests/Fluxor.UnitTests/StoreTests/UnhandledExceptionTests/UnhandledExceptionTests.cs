@@ -11,7 +11,6 @@ namespace Fluxor.UnitTests.StoreTests.UnhandledExceptionTests
 {
 	public class UnhandledExceptionTests
 	{
-		private readonly IDispatcher Dispatcher;
 		private readonly IStore Subject;
 
 		[Fact]
@@ -49,7 +48,7 @@ namespace Fluxor.UnitTests.StoreTests.UnhandledExceptionTests
 
 			Task effectTask = Task.Run(() =>
 			{
-				Dispatcher.Dispatch(action);
+				Subject.Dispatch(action);
 				// Wait for Effect to say it is ready, 1 second timeout
 				resetEvent.WaitOne(1000);
 			});
@@ -60,8 +59,7 @@ namespace Fluxor.UnitTests.StoreTests.UnhandledExceptionTests
 
 		public UnhandledExceptionTests()
 		{
-			Dispatcher = new Dispatcher();
-			Subject = new Store(Dispatcher);
+			Subject = new Store();
 			Subject.AddEffect(new EffectThatThrowsSimpleException());
 			Subject.AddEffect(new EffectThatThrowsAggregateException());
 			Subject.InitializeAsync().Wait();

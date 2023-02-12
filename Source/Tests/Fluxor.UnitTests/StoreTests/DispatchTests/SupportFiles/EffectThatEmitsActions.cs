@@ -11,10 +11,10 @@ namespace Fluxor.UnitTests.StoreTests.DispatchTests.SupportFiles
 		{
 			ActionsToEmit = actionsToEmit ?? Array.Empty<object>();
 		}
-		public override Task HandleAsync(TestAction action, IDispatcher dispatcher)
+		public override Task HandleAsync(TestAction action, IStore store)
 		{
 			foreach (object actionToEmit in ActionsToEmit)
-				dispatcher.Dispatch(actionToEmit);
+				store.Dispatch(actionToEmit);
 			return Task.CompletedTask;
 		}
 	}

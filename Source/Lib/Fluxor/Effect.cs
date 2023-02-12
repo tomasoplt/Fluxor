@@ -9,9 +9,9 @@ namespace Fluxor
 	public abstract class Effect<TTriggerAction> : IEffect
 	{
 		/// <summary>
-		/// <see cref="IEffect.HandleAsync(object, IDispatcher)"/>
+		/// <see cref="IEffect.HandleAsync(object, IStore)"/>
 		/// </summary>
-		public abstract Task HandleAsync(TTriggerAction action, IDispatcher dispatcher);
+		public abstract Task HandleAsync(TTriggerAction action, IStore store);
 
 		/// <summary>
 		/// <see cref="IEffect.ShouldReactToAction(object)"/>
@@ -19,7 +19,7 @@ namespace Fluxor
 		public bool ShouldReactToAction(object action) =>
 			action is TTriggerAction;
 
-		Task IEffect.HandleAsync(object action, IDispatcher dispatcher) =>
-			HandleAsync((TTriggerAction)action, dispatcher);
+		Task IEffect.HandleAsync(object action, IStore store) =>
+			HandleAsync((TTriggerAction)action, store);
 	}
 }

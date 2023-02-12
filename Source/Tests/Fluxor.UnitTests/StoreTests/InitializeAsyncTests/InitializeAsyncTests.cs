@@ -6,7 +6,6 @@ namespace Fluxor.UnitTests.StoreTests.InitializeAsyncTests
 {
 	public class InitializeAsyncTests
 	{
-		private readonly IDispatcher Dispatcher;
 		private readonly IStore Subject;
 
 		[Fact]
@@ -17,7 +16,7 @@ namespace Fluxor.UnitTests.StoreTests.InitializeAsyncTests
 			Subject.AddMiddleware(mockMiddleware.Object);
 
 			mockMiddleware
-				.Verify(x => x.InitializeAsync(Dispatcher, Subject));
+				.Verify(x => x.InitializeAsync(Subject));
 		}
 
 		[Fact]
@@ -41,13 +40,12 @@ namespace Fluxor.UnitTests.StoreTests.InitializeAsyncTests
 			Subject.AddMiddleware(mockMiddleware.Object);
 
 			mockMiddleware
-				.Verify(x => x.InitializeAsync(Dispatcher, Subject));
+				.Verify(x => x.InitializeAsync(Subject));
 		}
 
 		public InitializeAsyncTests()
 		{
-			Dispatcher = new Dispatcher();
-			Subject = new Store(Dispatcher);
+			Subject = new Store();
 		}
 	}
 }

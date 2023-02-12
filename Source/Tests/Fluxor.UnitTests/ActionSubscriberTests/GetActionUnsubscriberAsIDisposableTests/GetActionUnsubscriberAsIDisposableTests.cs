@@ -6,13 +6,11 @@ namespace Fluxor.UnitTests.ActionSubscriberTests.GetActionUnsubscriberAsIDisposa
 {
 	public class GetActionUnsubscriberAsIDisposableTests
 	{
-		private Dispatcher Dispatcher;
 		private Store Subject;
 
 		public GetActionUnsubscriberAsIDisposableTests()
 		{
-			Dispatcher = new Dispatcher();
-			Subject = new Store(Dispatcher);
+			Subject = new Store();
 			Subject.InitializeAsync().Wait();
 		}
 
@@ -21,7 +19,7 @@ namespace Fluxor.UnitTests.ActionSubscriberTests.GetActionUnsubscriberAsIDisposa
 		{
 			Subject.SubscribeToAction<TestAction>(this, x => throw new InvalidOperationException("Subscriber should not be triggered"));
 			Subject.GetActionUnsubscriberAsIDisposable(this).Dispose();
-			Dispatcher.Dispatch(new TestAction());
+			Subject.Dispatch(new TestAction());
 		}
 	}
 }

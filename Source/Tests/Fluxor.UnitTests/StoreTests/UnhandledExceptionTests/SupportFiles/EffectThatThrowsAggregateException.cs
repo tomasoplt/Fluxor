@@ -5,7 +5,7 @@ namespace Fluxor.UnitTests.StoreTests.UnhandledExceptionTests.SupportFiles
 {
 	public class EffectThatThrowsAggregateException : Effect<ThrowAggregateExceptionAction>
 	{
-		public override async Task HandleAsync(ThrowAggregateExceptionAction action, IDispatcher dispatcher)
+		public override async Task HandleAsync(ThrowAggregateExceptionAction action, IStore store)
 		{
 			var exception1 = new InvalidOperationException("First embedded exception");
 			var exception2 = new InvalidCastException("Second embedded exception");

@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
+
+[assembly: InternalsVisibleTo("Fluxor.UnitTests")]
 
 namespace Fluxor
 {
@@ -74,7 +77,7 @@ namespace Fluxor
 				//	2: An effect is triggered
 				//	3: The effect immediately dispatches a new action
 				// The Queue ensures it is processed after its triggering action has completed rather than immediately
-				QueuedActions.Enqueue(e.Action);
+				QueuedActions.Enqueue(action);
 
 				// HasActivatedStore is set to true when the page finishes loading
 				// At which point DequeueActions will be called
@@ -83,6 +86,11 @@ namespace Fluxor
 
 				DequeueActions();
 			};
+		}
+
+		public int GetQueuedActionsCount()
+		{
+			return QueuedActions.Count;
 		}
 
 		/// <see cref="IStore.AddEffect(IEffect)"/>
@@ -141,6 +149,7 @@ namespace Fluxor
 		{
 			if (HasActivatedStore)
 				return;
+
 			await ActivateStoreAsync();
 		}
 

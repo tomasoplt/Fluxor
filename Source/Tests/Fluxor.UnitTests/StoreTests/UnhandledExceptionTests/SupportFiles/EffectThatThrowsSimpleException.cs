@@ -5,7 +5,7 @@ namespace Fluxor.UnitTests.StoreTests.UnhandledExceptionTests.SupportFiles
 {
 	public class EffectThatThrowsSimpleException : Effect<ThrowSimpleExceptionAction>
 	{
-		public override async Task HandleAsync(ThrowSimpleExceptionAction action, IDispatcher dispatcher)
+		public override async Task HandleAsync(ThrowSimpleExceptionAction action, IStore store)
 		{
 			await Task.Delay(100); // Ensure it doesn't execute synchronously
 			try

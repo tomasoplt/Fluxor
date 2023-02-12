@@ -53,8 +53,7 @@ namespace Fluxor.UnitTests.StoreTests.ThreadingTests.DispatchTests
 		public DispatchTests()
 		{
 			StartEvent = new ManualResetEvent(false);
-			Dispatcher = new Dispatcher();
-			Subject = new Store(Dispatcher);
+			Subject = new Store();
 
 			Feature = new CounterFeature();
 			Subject.AddFeature(Feature);

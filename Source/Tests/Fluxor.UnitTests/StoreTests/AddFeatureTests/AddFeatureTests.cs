@@ -6,7 +6,6 @@ namespace Fluxor.UnitTests.StoreTests.AddFeatureTests
 {
 	public class AddFeatureTests
 	{
-		private readonly Dispatcher Dispatcher;
 		private readonly Store Subject;
 
 		[Fact]
@@ -42,8 +41,7 @@ namespace Fluxor.UnitTests.StoreTests.AddFeatureTests
 
 		public AddFeatureTests()
 		{
-			Dispatcher = new Dispatcher();
-			Subject = new Store(Dispatcher);
+			Subject = new Store();
 		}
 	}
 }
