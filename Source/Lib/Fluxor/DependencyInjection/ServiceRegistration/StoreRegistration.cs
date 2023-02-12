@@ -37,7 +37,6 @@ namespace Fluxor.DependencyInjection.ServiceRegistration
 			// Register a custom factory for building IStore that will inject all effects
 			services.Add(typeof(Store), serviceProvider =>
 			{
-				var dispatcher = serviceProvider.GetService<IDispatcher>();
 				var store = new Store();
 				foreach (FeatureClassInfo featureClassInfo in featureClassInfos)
 				{

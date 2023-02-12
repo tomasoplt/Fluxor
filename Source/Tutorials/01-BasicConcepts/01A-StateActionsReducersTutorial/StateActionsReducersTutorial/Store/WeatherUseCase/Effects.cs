@@ -1,5 +1,4 @@
 ﻿using Fluxor;
-using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace BasicConcepts.StateActionsReducersTutorial.Store.CounterUseCase
@@ -11,7 +10,7 @@ namespace BasicConcepts.StateActionsReducersTutorial.Store.CounterUseCase
 		}
 
 		[EffectMethod]
-		public async Task HandleFetchDataAction(FetchDataAction action, IDispatcher dispatcher)
+		public async Task HandleFetchDataAction(FetchDataAction action, IStore dispatcher)
 		{
 			await Task.CompletedTask;
 		}

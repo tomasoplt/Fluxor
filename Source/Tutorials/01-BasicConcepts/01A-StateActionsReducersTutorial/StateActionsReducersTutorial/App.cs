@@ -8,13 +8,11 @@ namespace BasicConcepts.StateActionsReducersTutorial
 	public class App
 	{
 		private readonly IStore Store;
-		public readonly IDispatcher Dispatcher;
 		public readonly IState<CounterState> CounterState;
 
-		public App(IStore store, IDispatcher dispatcher, IState<CounterState> counterState)
+		public App(IStore store, IState<CounterState> counterState)
 		{
 			Store = store;
-			Dispatcher = dispatcher;
 			CounterState = counterState;
 			CounterState.StateChanged += CounterState_StateChanged;
 		}
@@ -45,7 +43,7 @@ namespace BasicConcepts.StateActionsReducersTutorial
 				{
 					case "1":
 						var action = new IncrementCounterAction();
-						Dispatcher.Dispatch(action);
+						Store.Dispatch(action);
 						break;
 
 					case "x":

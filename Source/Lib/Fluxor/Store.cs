@@ -198,8 +198,9 @@ namespace Fluxor
 						ExecuteMiddlewareBeforeDispatch(nextActionToProcess);
 
 						// Notify all features of this action
-						foreach (var featureInstance in FeaturesByName.Values)
-							featureInstance.ReceiveDispatchNotificationFromStore(nextActionToProcess);
+						// Commented
+						// foreach (var featureInstance in FeaturesByName.Values)
+						// featureInstance.ReceiveDispatchNotificationFromStore(nextActionToProcess);
 
 						ActionSubscriber?.Notify(nextActionToProcess);
 						ExecuteMiddlewareAfterDispatch(nextActionToProcess);
@@ -258,22 +259,25 @@ namespace Fluxor
 				}
 			}
 
-			Task.Run(async () =>
+			if (executedEffects.Count > 0)
 			{
-				try
+				Task.Run(async () =>
 				{
-					await Task.WhenAll(executedEffects);
-				}
-				catch (Exception e)
-				{
-					collectExceptions(e);
-				}
+					try
+					{
+						await Task.WhenAll(executedEffects);
+					}
+					catch (Exception e)
+					{
+						collectExceptions(e);
+					}
 
-				// Let the UI decide if it wishes to deal with any unhandled exceptions.
-				// By default it should throw the exception if it is not handled.
-				foreach (Exception exception in recordedExceptions)
-					UnhandledException?.Invoke(this, new Exceptions.UnhandledExceptionEventArgs(exception));
-			});
+					// Let the UI decide if it wishes to deal with any unhandled exceptions.
+					// By default it should throw the exception if it is not handled.
+					foreach (Exception exception in recordedExceptions)
+						UnhandledException?.Invoke(this, new Exceptions.UnhandledExceptionEventArgs(exception));
+				});
+			}
 		}
 
 		private async Task InitializeMiddlewaresAsync()

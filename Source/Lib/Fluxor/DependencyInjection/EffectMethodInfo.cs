@@ -33,9 +33,9 @@ namespace Fluxor.DependencyInjection
 					nameof(methodInfo));
 
 			Type lastParameterType = methodParameters[methodParameters.Length - 1].ParameterType;
-			if (lastParameterType != typeof(IDispatcher))
+			if (lastParameterType != typeof(IStore))
 				throw new ArgumentException(
-					$"The last parameter of a method should be an {nameof(IDispatcher)}"
+					$"The last parameter of a method should be an {nameof(IStore)}"
 						+ $" when decorated with an [{nameof(EffectMethodAttribute)}]. "
 						+ methodInfo.GetClassNameAndMethodName(),
 					nameof(methodInfo));
